@@ -54,7 +54,8 @@ class CustomTomogramDataset(Dataset):
 
         if [i for i in padding if i > 0]:
             target = pad(target, padding)
-
+        #print("Source: ", source.shape)
+        #print("Target: ", target.shape)
         return source, target
     
     def set_tomograms(self, source_tomograms: int, target_tomograms: int) -> None:
