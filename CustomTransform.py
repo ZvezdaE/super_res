@@ -4,11 +4,16 @@ import numpy as np
 from random import randint
 
 class RandomCrop3D(torch.nn.Module):
-    def forward(self, source, target, size:int = 5):  # we assume inputs are always structured like this
+    def __init__(self, size:int = 5, fixed: bool = False):
+        super(RandomCrop3D, self).__init__()
+        self.size = size
+        self.fixed = fixed
+
+    def forward(self, source, target):  # we assume inputs are always structured like this
         
-        source_x_size, target_x_size, x_start = self._get_random_size(source.shape[0], target.shape[0], size)
-        source_y_size, target_y_size, y_start = self._get_random_size(source.shape[1], target.shape[1], size)
-        source_z_size, target_z_size, z_start = self._get_random_size(source.shape[2], target.shape[2], size)
+        source_x_size, target_x_size, x_start = self._get_random_size(source.shape[0], target.shape[0])
+        source_y_size, target_y_size, y_start = self._get_random_size(source.shape[1], target.shape[1])
+        source_z_size, target_z_size, z_start = self._get_random_size(source.shape[2], target.shape[2])
 
         #print("source size: ", source_x_size, source_y_size, source_z_size, "from: ", source.shape)
         #print("target size: ", target_x_size, target_y_size, target_z_size, "from: ", target.shape)
@@ -16,9 +21,12 @@ class RandomCrop3D(torch.nn.Module):
         
         return source[...,x_start:source_x_size, y_start:source_y_size, z_start:source_z_size], target[...,x_start*2:target_x_size, y_start*2:target_y_size, z_start*2:target_z_size]
 
-    def _get_random_size(self, source_size: int, target_size:int, size:int):
+    def _get_random_size(self, source_size: int, target_size:int):
         
-        source = randint(round(source_size/size), source_size)
+        if self.fixed:
+            source = round(source_size/self.size)
+        else:
+            source = randint(round(source_size/self.size), source_size)
         width = randint(0,source_size - source)
         target = source*2
         if target > target_size:
