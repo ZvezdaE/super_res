@@ -11,9 +11,19 @@ class RandomCrop3D(torch.nn.Module):
 
     def forward(self, source, target):  # we assume inputs are always structured like this
         
-        source_x_size, target_x_size, x_start = self._get_random_size(source.shape[0], target.shape[0])
-        source_y_size, target_y_size, y_start = self._get_random_size(source.shape[1], target.shape[1])
-        source_z_size, target_z_size, z_start = self._get_random_size(source.shape[2], target.shape[2])
+        set_x_size = 0
+        set_y_size = 0
+        set_z_size = 0
+
+        if isinstance(self.size, tuple):
+
+            set_x_size = self.size[0]
+            set_y_size = self.size[1]
+            set_z_size = self.size[2]
+
+        source_x_size, target_x_size, x_start = self._get_random_size(source.shape[0], target.shape[0], set_x_size)
+        source_y_size, target_y_size, y_start = self._get_random_size(source.shape[1], target.shape[1], set_y_size)
+        source_z_size, target_z_size, z_start = self._get_random_size(source.shape[2], target.shape[2], set_z_size)
 
         #print("source size: ", source_x_size, source_y_size, source_z_size, "from: ", source.shape)
         #print("target size: ", target_x_size, target_y_size, target_z_size, "from: ", target.shape)
@@ -21,12 +31,16 @@ class RandomCrop3D(torch.nn.Module):
         
         return source[...,x_start:source_x_size, y_start:source_y_size, z_start:source_z_size], target[...,x_start*2:target_x_size, y_start*2:target_y_size, z_start*2:target_z_size]
 
-    def _get_random_size(self, source_size: int, target_size:int):
+    def _get_random_size(self, source_size: int, target_size:int, fixed_size:int):
         
+        temp_size = self.size
+        if fixed_size > 0:
+            source_size = fixed_size
+            temp_size = 1
         if self.fixed:
-            source = round(source_size/self.size)
+            source = round(source_size/temp_size)
         else:
-            source = randint(round(source_size/self.size), source_size)
+            source = randint(round(source_size/temp_size), source_size)
         width = randint(0,source_size - source)
         target = source*2
         if target > target_size:
